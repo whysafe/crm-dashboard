@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Панель продаж — CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F5F7;--panel:#fff;--ink:#141821;--muted:#6A7180;--line:#E4E6EB;--accent:#0E7C66;--accent-2:#7BC4B2;--warn:#C2410C;--bad:#B91C1C;--side:#141821;--side-ink:#C9CDD6}
+:root[data-theme=dark]{--bg:#0E1117;--panel:#171B23;--ink:#E7EAF0;--muted:#8D95A5;--line:#262C37;--accent:#34D3AE;--accent-2:#1F6E5D;--side:#0A0D12}
+*{box-sizing:border-box}
+body{margin:0;font:14.5px/1.5 "Inter Tight",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+.layout{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside.side{background:var(--side);color:var(--side-ink);padding:1.4rem 1rem;display:flex;flex-direction:column;gap:.3rem}
+.brand{color:#fff;font-weight:700;font-size:1.15rem;margin:0 .6rem 1.5rem}
+.side a{display:block;padding:.55rem .7rem;border-radius:8px;text-decoration:none;color:inherit}
+.side a[aria-current=page]{background:rgba(255,255,255,.08);color:#fff}
+.side .foot{margin-top:auto;font-size:.8rem;opacity:.6;padding:0 .6rem}
+main{padding:1.5rem clamp(1rem,3vw,2rem) 3rem;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.head h1{font-size:1.5rem;margin:0}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:.35em .9em;border-radius:7px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.icon-btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;width:38px;height:38px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem}
+.kpi span{color:var(--muted);font-size:.85rem}
+.kpi b{display:block;font-size:1.7rem;font-weight:700;letter-spacing:-.02em;margin:.15rem 0}
+.delta{font-size:.82rem;font-weight:600}
+.delta.up{color:var(--accent)}.delta.down{color:var(--bad)}
+.charts{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1rem}
+.panel h2{font-size:1rem;margin:0 0 .8rem;font-weight:600}
+.chart svg{width:100%;height:auto;display:block}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--panel);padding:.35rem .6rem;border-radius:6px;font-size:.8rem;opacity:0;transition:opacity .1s;z-index:9}
+.legend{list-style:none;padding:0;margin:.8rem 0 0;display:grid;gap:.4rem;font-size:.9rem}
+.legend li{display:flex;align-items:center;gap:.5rem}
+.legend i{width:10px;height:10px;border-radius:3px}
+.legend b{margin-left:auto}
+.tools{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem}
+.tools input,.tools select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:.45em .7em}
+.tools input{flex:1;min-width:180px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th,td{text-align:left;padding:.6rem .5rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+th button{border:0;background:none;padding:0;font-weight:600;cursor:pointer;color:inherit}
+th[aria-sort=ascending] button::after{content:" ▲"}th[aria-sort=descending] button::after{content:" ▼"}
+td.num{text-align:right;font-variant-numeric:tabular-nums}th.num{text-align:right}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--bg)}
+.status{display:inline-block;border-radius:99px;padding:.05em .6em;font-size:.82rem;font-weight:600}
+.s-new{background:#DBEAFE;color:#1E40AF}.s-paid{background:#D1FAE5;color:#065F46}.s-shipped{background:#EDE9FE;color:#5B21B6}.s-cancel{background:#FEE2E2;color:#991B1B}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;color:var(--muted);font-size:.9rem}
+.pager button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:.3em .8em;cursor:pointer}
+.pager button[disabled]{opacity:.4;cursor:default}
+.drawer{position:fixed;inset:0 0 0 auto;width:min(380px,100%);background:var(--panel);border-left:1px solid var(--line);padding:1.4rem;transform:translateX(100%);transition:transform .2s;z-index:10;overflow:auto}
+.drawer.open{transform:none}
+.drawer dl{display:grid;grid-template-columns:auto 1fr;gap:.5rem 1rem}
+.drawer dt{color:var(--muted)}.drawer dd{margin:0}
+@media (max-width:1000px){.kpis{grid-template-columns:1fr 1fr}.charts{grid-template-columns:1fr}}
+@media (max-width:760px){.layout{grid-template-columns:1fr}aside.side{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Лавка · CRM</div>
+    <a href="#" aria-current="page">Обзор продаж</a><a href="#orders">Заказы</a><a href="#">Клиенты</a><a href="#">Товары</a><a href="#">Настройки</a>
+    <div class="foot">v2.4 · данные обновлены сегодня</div>
+  </aside>
+  <main>
+    <div class="head">
+      <h1>Обзор продаж</h1>
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <div class="seg" id="period" role="group" aria-label="Период"><button data-d="7">7 дней</button><button data-d="30">30 дней</button><button data-d="90">90 дней</button></div>
+        <button class="icon-btn" id="theme" aria-label="Переключить тему">◐</button>
+      </div>
+    </div>
+    <section class="kpis" id="kpis"></section>
+    <section class="charts">
+      <div class="panel chart"><h2>Выручка по дням</h2><div id="revenue"></div></div>
+      <div class="panel chart"><h2>Каналы продаж</h2><div id="channels"></div></div>
+    </section>
+    <section class="panel" id="orders">
+      <h2>Заказы</h2>
+      <div class="tools">
+        <input id="search" type="search" placeholder="Поиск: номер, клиент, город" aria-label="Поиск заказов">
+        <select id="statusFilter" aria-label="Статус"><option value="">Все статусы</option></select>
+        <button class="icon-btn" style="width:auto;padding:0 .9rem" id="csv">Скачать CSV</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th data-key="id"><button>№</button></th><th data-key="date"><button>Дата</button></th><th data-key="client"><button>Клиент</button></th>
+          <th data-key="city"><button>Город</button></th><th data-key="channel"><button>Канал</button></th><th data-key="status"><button>Статус</button></th>
+          <th data-key="sum" class="num"><button>Сумма</button></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <div class="pager"><span id="pageInfo"></span><span><button id="prev">Назад</button> <button id="next">Вперёд</button></span></div>
+    </section>
+  </main>
+</div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="tip" id="tip"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const rub = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+// Детерминированный генератор, чтобы цифры не менялись при перезагрузке
+let seed = 42; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const pick = a => a[Math.floor(rnd() * a.length)];
+const STATUSES = {new:'Новый', paid:'Оплачен', shipped:'Отправлен', cancel:'Отменён'};
+const CHANNELS = [['site','Сайт','var(--accent)'],['tg','Telegram-бот','#3B82F6'],['market','Маркетплейс','#F59E0B'],['offline','Магазин','#A855F7']];
+const NAMES = ['Анна К.','Игорь П.','Мария С.','Дмитрий В.','Ольга Н.','Сергей Л.','Екатерина Р.','Алексей М.','Наталья Т.','Павел Г.','Юлия Б.','Артём Д.'];
+const CITIES = ['Москва','Санкт-Петербург','Казань','Екатеринбург','Новосибирск','Краснодар','Самара','Нижний Новгород'];
+const today = new Date(); today.setHours(0,0,0,0);
+const ORDERS = [];
+for (let d = 179; d >= 0; d--) {
+  const day = new Date(today); day.setDate(day.getDate() - d);
+  const n = 3 + Math.floor(rnd() * 7 + (179 - d) / 40);
+  for (let i = 0; i < n; i++) {
+    const r = rnd();
+    ORDERS.push({id: 10000 + ORDERS.length, date: day, client: pick(NAMES), city: pick(CITIES),
+      channel: rnd() < .42 ? 'site' : pick(['tg','market','market','offline']),
+      status: d < 2 ? pick(['new','paid']) : r < .07 ? 'cancel' : d < 6 ? pick(['paid','shipped']) : 'shipped',
+      sum: Math.round((900 + rnd() * rnd() * 14000) / 10) * 10});
+  }
+}
+ORDERS.reverse();
+
+let days = 30, sortKey = 'date', sortDir = -1, page = 0, query = '', statusF = '';
+const PER = 10;
+const inRange = (o, from, to) => o.date >= from && o.date < to;
+function range(offset){ const to = new Date(today); to.setDate(to.getDate() + 1 - offset * days); const from = new Date(to); from.setDate(from.getDate() - days); return [from, to]; }
+function metrics(list){ const ok = list.filter(o => o.status !== 'cancel'); const rev = ok.reduce((s, o) => s + o.sum, 0);
+  return {rev, orders: ok.length, avg: ok.length ? rev / ok.length : 0, cancel: list.length ? list.filter(o => o.status === 'cancel').length / list.length * 100 : 0}; }
+
+function renderKpis(){
+  const [f, t] = range(0), [pf, pt] = range(1);
+  const cur = metrics(ORDERS.filter(o => inRange(o, f, t))), prev = metrics(ORDERS.filter(o => inRange(o, pf, pt)));
+  const card = (label, val, c, p, fmt, invert) => {
+    const ch = p ? (c - p) / p * 100 : 0, good = invert ? ch <= 0 : ch >= 0;
+    return `<div class="panel kpi"><span>${label}</span><b>${fmt(val)}</b><span class="delta ${good ? 'up' : 'down'}">${ch >= 0 ? '↑' : '↓'} ${Math.abs(ch).toFixed(1).replace('.', ',')}% к прошлому периоду</span></div>`;
+  };
+  $('#kpis').innerHTML = card('Выручка', cur.rev, cur.rev, prev.rev, rub) + card('Заказы', cur.orders, cur.orders, prev.orders, n => n.toLocaleString('ru-RU')) +
+    card('Средний чек', cur.avg, cur.avg, prev.avg, rub) + card('Отмены', cur.cancel, cur.cancel, prev.cancel, n => n.toFixed(1).replace('.', ',') + '%', true);
+}
+
+function renderRevenue(){
+  const [from] = range(0), byDay = [];
+  for (let i = 0; i < days; i++) { const d = new Date(from); d.setDate(d.getDate() + i); byDay.push({d, v: 0}); }
+  ORDERS.forEach(o => { if (o.status === 'cancel') return; const i = Math.round((o.date - from) / 864e5); if (byDay[i]) byDay[i].v += o.sum; });
+  const W = 720, H = 240, L = 54, B = 26, max = Math.max(...byDay.map(x => x.v)) * 1.1 || 1, bw = (W - L) / byDay.length;
+  const y = v => (H - B) - v / max * (H - B - 10);
+  const ticks = [0, .25, .5, .75, 1].map(k => max * k);
+  const avg = []; byDay.forEach((x, i) => { const w = byDay.slice(Math.max(0, i - 6), i + 1); avg.push(w.reduce((s, z) => s + z.v, 0) / w.length); });
+  $('#revenue').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Выручка по дням за ${days} дней">
+    ${ticks.map(v => `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${v >= 1e3 ? Math.round(v / 1e3) + 'к' : 0}</text>`).join('')}
+    ${byDay.map((x, i) => `<rect class="bar" data-i="${i}" x="${L + i * bw + bw * .15}" y="${y(x.v)}" width="${bw * .7}" height="${(H - B) - y(x.v)}" rx="2" fill="var(--accent-2)"/>`).join('')}
+    <path d="${avg.map((v, i) => (i ? 'L' : 'M') + (L + i * bw + bw / 2).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    ${byDay.map((x, i) => i % Math.ceil(days / 7) ? '' : `<text x="${L + i * bw + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${x.d.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}</text>`).join('')}
+  </svg><p style="margin:.4rem 0 0;color:var(--muted);font-size:.85rem">Столбцы: выручка за день. Линия: среднее за 7 дней.</p>`;
+  const tip = $('#tip');
+  $('#revenue svg').onmousemove = e => { const b = e.target.closest('.bar'); if (!b) { tip.style.opacity = 0; return; }
+    const x = byDay[+b.dataset.i]; tip.textContent = `${x.d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'})}: ${rub(x.v)}`;
+    tip.style.left = e.clientX + 12 + 'px'; tip.style.top = e.clientY - 30 + 'px'; tip.style.opacity = 1; };
+  $('#revenue svg').onmouseleave = () => { tip.style.opacity = 0; };
+}
+
+function renderChannels(){
+  const [f, t] = range(0), list = ORDERS.filter(o => inRange(o, f, t) && o.status !== 'cancel');
+  const total = list.reduce((s, o) => s + o.sum, 0) || 1;
+  const parts = CHANNELS.map(([id, name, color]) => ({name, color, v: list.filter(o => o.channel === id).reduce((s, o) => s + o.sum, 0)}));
+  let acc = 0; const R = 70, C = 2 * Math.PI * R;
+  $('#channels').innerHTML = `<svg viewBox="0 0 200 200" style="max-width:220px;margin:auto" role="img" aria-label="Доли каналов продаж">
+    ${parts.map(p => { const len = p.v / total * C; const s = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${p.color}" stroke-width="26" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}" transform="rotate(-90 100 100)"/>`; acc += len; return s; }).join('')}
+    <text x="100" y="96" text-anchor="middle" font-size="12" fill="var(--muted)">выручка</text><text x="100" y="116" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">${(total / 1e6).toFixed(2).replace('.', ',')} млн</text></svg>
+    <ul class="legend">${parts.map(p => `<li><i style="background:${p.color}"></i>${p.name}<b>${Math.round(p.v / total * 100)}%</b></li>`).join('')}</ul>`;
+}
+
+$('#statusFilter').innerHTML += Object.entries(STATUSES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+function filteredOrders(){
+  const q = query.toLowerCase();
+  return ORDERS.filter(o => (!statusF || o.status === statusF) && (!q || String(o.id).includes(q) || o.client.toLowerCase().includes(q) || o.city.toLowerCase().includes(q)))
+    .sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * sortDir);
+}
+const chName = id => CHANNELS.find(c => c[0] === id)[1];
+function renderTable(){
+  const list = filteredOrders(), pages = Math.max(1, Math.ceil(list.length / PER));
+  page = Math.min(page, pages - 1);
+  $('#rows').innerHTML = list.slice(page * PER, page * PER + PER).map(o => `<tr tabindex="0" data-id="${o.id}">
+    <td>${o.id}</td><td>${o.date.toLocaleDateString('ru-RU')}</td><td>${o.client}</td><td>${o.city}</td><td>${chName(o.channel)}</td>
+    <td><span class="status s-${o.status}">${STATUSES[o.status]}</span></td><td class="num">${rub(o.sum)}</td></tr>`).join('') ||
+    '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">Заказы не найдены. Измените поиск или статус.</td></tr>';
+  $('#pageInfo').textContent = `${list.length ? page * PER + 1 : 0}–${Math.min(list.length, page * PER + PER)} из ${list.length}`;
+  $('#prev').disabled = page === 0; $('#next').disabled = page >= pages - 1;
+  document.querySelectorAll('th[data-key]').forEach(th => th.setAttribute('aria-sort', th.dataset.key === sortKey ? (sortDir > 0 ? 'ascending' : 'descending') : 'none'));
+}
+document.querySelector('thead').addEventListener('click', e => { const th = e.target.closest('th[data-key]'); if (!th) return;
+  sortDir = sortKey === th.dataset.key ? -sortDir : 1; sortKey = th.dataset.key; renderTable(); });
+$('#search').addEventListener('input', e => { query = e.target.value.trim(); page = 0; renderTable(); });
+$('#statusFilter').addEventListener('change', e => { statusF = e.target.value; page = 0; renderTable(); });
+$('#prev').onclick = () => { page--; renderTable(); }; $('#next').onclick = () => { page++; renderTable(); };
+
+const drawer = $('#drawer');
+function openOrder(id){
+  const o = ORDERS.find(x => x.id === +id);
+  drawer.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Заказ №${o.id}</h2><button class="icon-btn" id="closeDrawer" aria-label="Закрыть">×</button></div>
+    <p><span class="status s-${o.status}">${STATUSES[o.status]}</span></p>
+    <dl><dt>Дата</dt><dd>${o.date.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'})}</dd><dt>Клиент</dt><dd>${o.client}</dd>
+    <dt>Город</dt><dd>${o.city}</dd><dt>Канал</dt><dd>${chName(o.channel)}</dd><dt>Сумма</dt><dd><b>${rub(o.sum)}</b></dd>
+    <dt>Заказов клиента</dt><dd>${ORDERS.filter(x => x.client === o.client).length}</dd></dl>`;
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); $('#closeDrawer').focus();
+  $('#closeDrawer').onclick = closeDrawer;
+}
+function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); }
+$('#rows').addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if (tr) openOrder(tr.dataset.id); });
+$('#rows').addEventListener('keydown', e => { const tr = e.target.closest('tr[data-id]'); if (tr && e.key === 'Enter') openOrder(tr.dataset.id); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+$('#csv').onclick = () => {
+  const rows = [['Номер','Дата','Клиент','Город','Канал','Статус','Сумма'], ...filteredOrders().map(o => [o.id, o.date.toLocaleDateString('ru-RU'), o.client, o.city, chName(o.channel), STATUSES[o.status], o.sum])];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.join(';')).join('\n')], {type:'text/csv'}));
+  a.download = 'orders.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#period').addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; days = +b.dataset.d; renderAll(); });
+const root = document.documentElement;
+root.dataset.theme = (() => { try { return localStorage.getItem('crm-theme'); } catch { return null; } })() || 'light';
+$('#theme').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('crm-theme', root.dataset.theme); } catch {} };
+function renderAll(){ document.querySelectorAll('#period button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.d === days)); renderKpis(); renderRevenue(); renderChannels(); renderTable(); }
+renderAll();
+</script>
+</body>
+</html>
